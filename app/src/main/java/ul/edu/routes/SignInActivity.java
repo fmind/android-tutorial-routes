@@ -29,21 +29,17 @@ public class SignInActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_in);
 
-        // configure sign-in to request the user's ID, email address, and basic profile
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestEmail()
-                .build();
+        // TODO: configure sign-in to request the user's ID, email address, and basic profile
 
-        // build a GoogleSignInClient with the options specified by gso
-        client = GoogleSignIn.getClient(this, gso);
+        // TODO: build a GoogleSignInClient with the options specified by gso
     }
 
     @Override
     protected void onStart() {
         super.onStart();
 
-        // if the user is already signed, account will be non-null
-        account = GoogleSignIn.getLastSignedInAccount(this);
+        // TODO: if the user is already signed, account will be non-null
+        account = null;
 
         updateUI(account);
     }
@@ -52,12 +48,9 @@ public class SignInActivity extends AppCompatActivity {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        // result returned from launching the Intent from getSignInIntent(...)
+        // TODO: esult returned from launching the Intent from getSignInAccountFromIntent(...)
         if (requestCode == RC_SIGN_IN) {
             // the task returned is always completed (no need to attach a listener)
-            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
-
-            handleSignInResult(task);
         }
     }
 

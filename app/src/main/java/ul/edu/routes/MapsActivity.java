@@ -23,45 +23,19 @@ public class MapsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        //inflate and create map
-        setContentView(R.layout.activity_maps);
-        map = (MapView) findViewById(R.id.map);
-        map.setTileSource(TileSourceFactory.MAPNIK);
+        //TODO: inflate and create map
 
-        // add default zoom buttons
-        map.setMultiTouchControls(true);
-        map.setBuiltInZoomControls(true);
+        // TODO: add default zoom buttons
 
-        // coordinate of Maison du Nombre, Luxembourg
-        GeoPoint startPoint = new GeoPoint(49.50381,5.94776);
+        // TODO: coordinate of Maison du Nombre, Luxembourg
 
-        // set the default zoom and position of the map
-        IMapController mapController = map.getController();
-        mapController.setCenter(startPoint);
-        mapController.setZoom(20.0);
+        // TODO: set the default zoom and position of the map
 
-        // add a marker at the position of Maison du Nombre
-        final ArrayList<OverlayItem> items = new ArrayList<OverlayItem>();
-        items.add(new OverlayItem("Maison du Nombre", "Belval", startPoint));
+        // TODO: add a marker at the position of Maison du Nombre
 
-        // setup an event listener to add and remove overlay items
-        final ItemizedOverlayWithFocus<OverlayItem> overlay = new ItemizedOverlayWithFocus<OverlayItem>(getApplicationContext(), items,
-                new OnItemGestureListener<OverlayItem>() {
-                    @Override
-                    public boolean onItemSingleTapUp(final int index, final OverlayItem item) {
-                        Toast.makeText(getApplicationContext(), "SINGLE TAP: " + Integer.toString(index), Toast.LENGTH_LONG).show();
-                        return true;
-                    }
-                    @Override
-                    public boolean onItemLongPress(final int index, final OverlayItem item) {
-                        Toast.makeText(getApplicationContext(), "LONG PRESS:" + Integer.toString(index), Toast.LENGTH_LONG).show();
-                        return true;
-                    }
-                });
-        overlay.setFocusItemsOnTap(true);
+        // TODO: setup an event listener to add and remove overlay items
 
-        // add an overlay to the map
-        map.getOverlays().add(overlay);
+        // TODO add an overlay to the map
     }
 
     @Override
