@@ -1,109 +1,112 @@
 package ul.edu.routes;
 
 import android.content.Intent;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
-import com.google.android.gms.auth.api.Auth;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.gms.auth.api.signin.GoogleSignInResult;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
+import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 
-public class SignInActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener {
+public class SignInActivity extends AppCompatActivity {
     private static final String TAG = "SignInActivity";
-    private static final int RC_SIGN_IN = 9001; // code assigned when starting the sign-in activity (can be any number)
 
+    private static final int RC_SIGN_IN = 9001;
+
+    private GoogleSignInClient client;
     private GoogleSignInAccount account;
-    private GoogleApiClient client;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_in);
 
-        // Configure sign-in to request the user's ID, email address, and basic
-        // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
+        // configure sign-in to request the user's ID, email address, and basic profile
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
                 .build();
 
-        // Build a GoogleApiClient with access to the Google Sign-In API and the
-        // options specified by gso.
-        client = new GoogleApiClient.Builder(this)
-                .enableAutoManage(this, this)
-                .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
-                .build();
+        // build a GoogleSignInClient with the options specified by gso
+        client = GoogleSignIn.getClient(this, gso);
     }
 
     @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
+    protected void onStart() {
+        super.onStart();
 
-    }
+        // if the user is already signed, account will be non-null
+        account = GoogleSignIn.getLastSignedInAccount(this);
 
-    public void startSignIn(View view) {
-        // https://developers.google.com/identity/sign-in/android/sign-in
-        // start Google sign-in activity
-        Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(client);
-        startActivityForResult(signInIntent, RC_SIGN_IN);
-    }
-
-    public void startSignOut(View view) {
-        // https://developers.google.com/identity/sign-in/android/disconnect
-        // start Google sign-out task in background
-        Auth.GoogleSignInApi.signOut(client).setResultCallback(
-                new ResultCallback<Status>() {
-                    @Override
-                    public void onResult(Status status) {
-                        handleSignOutResult(status);
-                    }
-                }
-        );
+        updateUI(account);
     }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        // Result returned from launching the Intent from GoogleSignInApi.getSignInIntent(...);
+        // result returned from launching the Intent from getSignInIntent(...)
         if (requestCode == RC_SIGN_IN) {
-            GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
-            handleSignInResult(result);
+            // the task returned is always completed (no need to attach a listener)
+            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
+
+            handleSignInResult(task);
         }
     }
 
-    private void handleSignInResult(GoogleSignInResult result) {
-        Log.i(TAG, "handleSignInResult:" + result.isSuccess());
+    public void signIn(View view) {
+        Intent signInIntent = client.getSignInIntent();
 
-        if (result.isSuccess()) {
-            // set the account and login attributes
-            account = result.getSignInAccount();
-            MainActivity.login = true;
-
-            // display a message
-            Toast toast = Toast.makeText(getApplicationContext(), "Sign-in OK: " + account.getEmail(), Toast.LENGTH_LONG);
-            toast.show();
-        }
+        startActivityForResult(signInIntent, RC_SIGN_IN);
     }
 
-    private void handleSignOutResult(Status status) {
-        Log.i(TAG, "handleSignOutResult:" + status.isSuccess());
+    public void signOut(View view) {
+        client.signOut().addOnCompleteListener(this, new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        handleSignOutResult(task);
+                    }});
+    }
 
-        if (status.isSuccess()) {
-            // set the account and login attributes
-            account = null;
+    public void updateUI(GoogleSignInAccount account) {
+        if (account == null) {
             MainActivity.login = false;
+            Log.i(TAG, "User logged out");
+            Toast.makeText(getApplicationContext(), "Sign-out", Toast.LENGTH_LONG).show();
+        } else {
+            MainActivity.login = true;
+            Log.i(TAG, "User logged in");
+            Log.d(TAG, "Name: " + account.getDisplayName());
+            Log.d(TAG, "Email: " + account.getEmail());
+            Toast.makeText(getApplicationContext(), "Sign-in: " + account.getEmail(), Toast.LENGTH_LONG).show();
+        }
+    }
 
-            // display a message
-            Toast toast = Toast.makeText(getApplicationContext(), "Sign-out OK !", Toast.LENGTH_LONG);
-            toast.show();
+    private void handleSignInResult(Task<GoogleSignInAccount> completedTask) {
+        try {
+            GoogleSignInAccount account = completedTask.getResult(ApiException.class);
+
+            updateUI(account);
+        } catch (ApiException e) {
+            // the status code indicates the detailed failure reason
+            Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
+            updateUI(null);
+        }
+    }
+
+    private void handleSignOutResult(Task<Void> completedTask) {
+        try {
+            completedTask.getResult(ApiException.class);
+
+            updateUI(null);
+        } catch (ApiException e) {
         }
     }
 }

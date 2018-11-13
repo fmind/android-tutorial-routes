@@ -18,22 +18,22 @@
         android:layout_centerHorizontal="true">
 
         <Button
-            android:text="Sign In"
+            android:id="@+id/button_signin"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/button_signin"
-            android:onClick="startSignIn" />
+            android:onClick="signIn"
+            android:text="Sign In" />
 
         <Space
             android:layout_width="match_parent"
             android:layout_height="50px" />
 
         <Button
-            android:text="Sign Out"
+            android:id="@+id/button_signout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/button_signout"
-            android:onClick="startSignOut" />
+            android:onClick="signOut"
+            android:text="Sign Out" />
     </LinearLayout>
 
 </RelativeLayout>

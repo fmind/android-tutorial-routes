@@ -1,165 +1,80 @@
 package ul.edu.routes;
 
-import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
-import android.util.Log;
+import android.support.v7.app.AppCompatActivity;
+import android.widget.Toast;
 
-import com.directions.route.Route;
-import com.directions.route.RouteException;
-import com.directions.route.Routing;
-import com.directions.route.RoutingListener;
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.Polyline;
-import com.google.android.gms.maps.model.PolylineOptions;
+import org.osmdroid.api.IMapController;
+import org.osmdroid.util.GeoPoint;
+import org.osmdroid.views.MapView;
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
+import org.osmdroid.views.overlay.ItemizedIconOverlay.OnItemGestureListener;
+import org.osmdroid.views.overlay.ItemizedOverlayWithFocus;
+import org.osmdroid.views.overlay.OverlayItem;
 
 import java.util.ArrayList;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMapLongClickListener, RoutingListener {
+public class MapsActivity extends AppCompatActivity {
     private static final String TAG = "MapsActivity";
 
-    private GoogleMap map;
-    private MarkerOptions origin;
-    private MarkerOptions destination;
-    private ArrayList<Polyline> polylines;
+    private MapView map = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        //inflate and create map
         setContentView(R.layout.activity_maps);
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
+        map = (MapView) findViewById(R.id.map);
+        map.setTileSource(TileSourceFactory.MAPNIK);
 
-        // initialize the object attributes
-        map = null;
-        origin = null;
-        destination = null;
-        polylines = new ArrayList<>();
-    }
+        // add default zoom buttons
+        map.setMultiTouchControls(true);
+        map.setBuiltInZoomControls(true);
 
+        // coordinate of Maison du Nombre, Luxembourg
+        GeoPoint startPoint = new GeoPoint(49.50381,5.94776);
 
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-        map = googleMap;
-        map.setOnMapLongClickListener(this);
+        // set the default zoom and position of the map
+        IMapController mapController = map.getController();
+        mapController.setCenter(startPoint);
+        mapController.setZoom(20.0);
 
-        // create the origin marker
-        LatLng point = new LatLng(49.626271, 6.158536);
-        origin = new MarkerOptions().position(point).title("Origin");
-        origin.icon(BitmapDescriptorFactory.fromResource(R.drawable.start_blue));
+        // add a marker at the position of Maison du Nombre
+        final ArrayList<OverlayItem> items = new ArrayList<OverlayItem>();
+        items.add(new OverlayItem("Maison du Nombre", "Belval", startPoint));
 
-        // add the marker to the map
-        markOrigin();
-    }
+        // setup an event listener to add and remove overlay items
+        final ItemizedOverlayWithFocus<OverlayItem> overlay = new ItemizedOverlayWithFocus<OverlayItem>(getApplicationContext(), items,
+                new OnItemGestureListener<OverlayItem>() {
+                    @Override
+                    public boolean onItemSingleTapUp(final int index, final OverlayItem item) {
+                        Toast.makeText(getApplicationContext(), "SINGLE TAP: " + Integer.toString(index), Toast.LENGTH_LONG).show();
+                        return true;
+                    }
+                    @Override
+                    public boolean onItemLongPress(final int index, final OverlayItem item) {
+                        Toast.makeText(getApplicationContext(), "LONG PRESS:" + Integer.toString(index), Toast.LENGTH_LONG).show();
+                        return true;
+                    }
+                });
+        overlay.setFocusItemsOnTap(true);
 
-    @Override
-    public void onMapLongClick(LatLng point) {
-        // remove all markers from the map
-        map.clear();
-
-        // create the destination marker
-        destination = new MarkerOptions().position(point).title("Destination");
-        destination.icon(BitmapDescriptorFactory.fromResource(R.drawable.end_green));
-
-        // add the both markers to the map
-        markOrigin();
-        markDestination();
-
-        // display the route and log its duration/distance
-        traceRoute(origin, destination);
+        // add an overlay to the map
+        map.getOverlays().add(overlay);
     }
 
     @Override
-    public void onRoutingSuccess(ArrayList<Route> route, int shortestRouteIndex) {
-        // remove the previous polylines
-        if (polylines.size() > 0) {
-            for (Polyline poly : polylines) {
-                poly.remove();
-            }
-        }
+    public void onResume(){
+        super.onResume();
 
-        // create a new array of polylines
-        polylines = new ArrayList<>();
-
-        // select the shortest path
-        Route path = route.get(shortestRouteIndex);
-
-        // add polylines to the map and the array
-        PolylineOptions polyOptions = new PolylineOptions();
-        polyOptions.color(R.color.colorPrimary);
-        polyOptions.width(13);
-        polyOptions.addAll(path.getPoints());
-        Polyline polyline = map.addPolyline(polyOptions);
-        polylines.add(polyline);
-
-        // log the distance and duration
-        Log.i(TAG, "[Route] distance: " + path.getDistanceText() + ", duration: " + path.getDurationValue() + " sec");
+        map.onResume();
     }
 
     @Override
-    public void onRoutingFailure(RouteException e) {
+    public void onPause(){
+        super.onPause();
 
-    }
-
-    @Override
-    public void onRoutingStart() {
-
-    }
-
-    @Override
-    public void onRoutingCancelled() {
-
-    }
-
-    private void markOrigin() {
-        // safe guard
-        if (origin == null)
-            return;
-
-        // add the marker to the map
-        map.addMarker(origin);
-
-        // center the camera with a zoom of 15
-        map.moveCamera(CameraUpdateFactory.newLatLngZoom(origin.getPosition(), 15));
-    }
-
-    private void markDestination() {
-        // safe guard
-        if (destination == null)
-            return;
-
-        // add the marker to the map
-        map.addMarker(destination);
-
-        // center the camera with a zoom of 15
-        map.moveCamera(CameraUpdateFactory.newLatLngZoom(destination.getPosition(), 15));
-    }
-
-    private void traceRoute(MarkerOptions origin, MarkerOptions destination) {
-        // initialize an asynchronous request using the direction api
-        Routing routing = new Routing.Builder()
-                .travelMode(Routing.TravelMode.WALKING)
-                .withListener(this)
-                .waypoints(origin.getPosition(), destination.getPosition())
-                .build();
-
-        // execute the request
-        routing.execute();
+        map.onPause();
     }
 }
