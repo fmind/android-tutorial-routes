@@ -48,7 +48,7 @@ public class SignInActivity extends AppCompatActivity {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        // TODO: esult returned from launching the Intent from getSignInAccountFromIntent(...)
+        // TODO: result returned from launching the Intent from getSignInAccountFromIntent(...)
         if (requestCode == RC_SIGN_IN) {
             // the task returned is always completed (no need to attach a listener)
         }
@@ -83,23 +83,10 @@ public class SignInActivity extends AppCompatActivity {
     }
 
     private void handleSignInResult(Task<GoogleSignInAccount> completedTask) {
-        try {
-            GoogleSignInAccount account = completedTask.getResult(ApiException.class);
-
-            updateUI(account);
-        } catch (ApiException e) {
-            // the status code indicates the detailed failure reason
-            Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
-            updateUI(null);
-        }
+        // TODO: handle sign in result in case the user log in (or not)
     }
 
     private void handleSignOutResult(Task<Void> completedTask) {
-        try {
-            completedTask.getResult(ApiException.class);
-
-            updateUI(null);
-        } catch (ApiException e) {
-        }
+        // TODO: handle sign out in case the user log out
     }
 }
