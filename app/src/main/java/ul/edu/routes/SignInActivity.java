@@ -16,7 +16,7 @@ import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
-public class SignInActivity extends AppCompatActivity {
+public class SignInActivity extends AppCompatActivity implements View.OnClickListener {
     private static final String TAG = "SignInActivity";
 
     private static final int RC_SIGN_IN = 9001;
@@ -30,8 +30,14 @@ public class SignInActivity extends AppCompatActivity {
         setContentView(R.layout.activity_sign_in);
 
         // TODO: configure sign-in to request the user's ID, email address, and basic profile
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestEmail()
+                .build();
 
         // TODO: build a GoogleSignInClient with the options specified by gso
+        this.client = GoogleSignIn.getClient(this, gso);
+
+        findViewById(R.id.sign_in_button).setOnClickListener(this);
     }
 
     @Override
@@ -39,7 +45,7 @@ public class SignInActivity extends AppCompatActivity {
         super.onStart();
 
         // TODO: if the user is already signed, account will be non-null
-        account = null;
+        this.account = GoogleSignIn.getLastSignedInAccount(this);
 
         updateUI(account);
     }
@@ -50,7 +56,9 @@ public class SignInActivity extends AppCompatActivity {
 
         // TODO: result returned from launching the Intent from getSignInAccountFromIntent(...)
         if (requestCode == RC_SIGN_IN) {
-            // the task returned is always completed (no need to attach a listener)
+            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
+
+            handleSignInResult(task);
         }
     }
 
@@ -84,9 +92,30 @@ public class SignInActivity extends AppCompatActivity {
 
     private void handleSignInResult(Task<GoogleSignInAccount> completedTask) {
         // TODO: handle sign in result in case the user log in (or not)
+        try {
+            GoogleSignInAccount account = completedTask.getResult(ApiException.class);
+
+            updateUI(account);
+        } catch (ApiException e) {
+            Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
+
+            updateUI(null);
+        }
     }
 
     private void handleSignOutResult(Task<Void> completedTask) {
         // TODO: handle sign out in case the user log out
+    }
+
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.sign_in_button:
+                signIn(view);
+                break;
+            case R.id.button_sign_out:
+                signOut(view);
+                break;
+        }
     }
 }
